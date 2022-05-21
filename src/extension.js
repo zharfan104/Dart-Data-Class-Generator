@@ -931,7 +931,7 @@ class DataClassGenerator {
     insertConstructor(clazz) {
         const withDefaults = readSetting('constructor.default_values');
 
-        let constr = '';
+        let constr = '\n';
         let startBracket = '({';
         let endBracket = '})';
 
@@ -1143,8 +1143,8 @@ class DataClassGenerator {
                     return `IconData(${value}${materialConvertValue}, fontFamily: 'MaterialIcons')`
                 default:
                     return `${
-                      !prop.isPrimitive ? prop.type + ".fromMap(" : ""
-                    }${value}${!prop.isPrimitive ? " as Map<String,dynamic>)" : ""}${
+                      !prop.isPrimitive ? prop.type + ".fromMap(ReturnValue.map(" : ""
+                    }${value}${!prop.isPrimitive ? "))" : ""}${
                       fromJSON
                         ? prop.isDouble
                           ? ".toDouble()"
@@ -1188,24 +1188,29 @@ class DataClassGenerator {
                 }
 
             } else if (p.isCollection) {
-                const defaultValue =
-                  withDefaultValues && !p.isNullable && p.isPrimitive
-                    ? ` ?? const <${p.listType.rawType}>${
-                        p.isList ? "[]" : "{}"
-                      })`
-                    : "";
-
-                method += `${p.type}.from(`;
-                /// List<String>.from(map['allowed'] ?? const <String>[] as List<String>), 
+                //Remove defaultValue
+                // const defaultValue = withDefaultValues && !p.isNullable ? ` ?? const ${p.isList ? '[]' : '{}'}` : '';
+                const defaultValue = ``;
                 if (p.isPrimitive) {
-                    method += `(${value}${defaultValue} as ${p.type})`;
+                const type = p.type
+                    .replace('List', 'list')
+                    .replace('Map', 'map')
+                    .replace('Set', 'set');
+                    method += `ReturnValue.${type}(`;
+                    method += `${value}${defaultValue})`;
                 } else {
-                    method += `(${value} as List<int>).map<${p.listType.rawType}>((x) => ${customTypeMapping(p, 'x')},),${defaultValue})`;
+                const type = p.type
+                    .replace('List<', '')
+                    .replace('Map<', '')
+                    .replace('Set<', '')
+                    .replace('>', '');
+                    method += `ReturnValue.listObject<${type}>(\n`;
+                    method += `\t\tvalue: ${value},\n`;
+                    method += `\t\tfromMap:  ${type}.fromMap,\n\t\t)`;
                 }
-            /// (map['name'] ?? '') as String
             } else {
                 if (p.isPrimitive) 
-                    method += customTypeMapping(p)+` as ${p.type}`;
+                    method =  `ReturnValue.${p.type.toLowerCase()}(` + `${value})`;
                 else
                     method += customTypeMapping(p);
             }
@@ -1378,7 +1383,8 @@ class DataClassGenerator {
         // see: https://github.com/BendixMa/Dart-Data-Class-Generator/issues/8
         if (clazz.hasSuperclass && clazz.superclass.includes('Base')) return;
 
-        this.requiresImport('package:equatable/equatable.dart');
+        this.requiresImport('package:dependencies/dependencies.dart');
+        this.requiresImport('package:common/common.dart');
 
         if (!clazz.usesEquatable) {
             if (clazz.hasSuperclass||readSetting('useEquatableMixin')) {
@@ -2075,7 +2081,7 @@ class DataClassCodeActions {
      */
     createDataClassFix(clazz) {
         if (clazz.didChange) {
-            const fix = new vscode.CodeAction('Generate data class', vscode.CodeActionKind.QuickFix);
+            const fix = new vscode.CodeAction('Generate data class with Return Value', vscode.CodeActionKind.QuickFix);
             fix.edit = this.getClazzEdit(clazz);
             return fix;
         }
@@ -2198,12 +2204,13 @@ function getReplaceEdit(values, imports = null, showLogs = false) {
       }
       if (!isIncluding) ignores.push(ignore);
     });
-    if (ignores.length > 0)
-      edit.insert(
-        uri,
-        new vscode.Position(0, 0),
-        `// ignore_for_file: ${ignores.join(",")}\n`
-      );
+    //Ignore comment removed
+    // if (ignores.length > 0)
+    //   edit.insert(
+    //     uri,
+    //     new vscode.Position(0, 0),
+    //     `// ignore_for_file: ${ignores.join(",")}\n`
+    //   );
 
 
     for (var i = clazzes.length - 1; i >= 0; i--) {
