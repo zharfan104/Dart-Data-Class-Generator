@@ -749,6 +749,8 @@ class DataClassGenerator {
 
     generateDataClazzes() {
         const insertConstructor = readSetting('constructor.enabled') && this.isPartSelected('constructor');
+        let documentText = this.text.toString();
+        let isStateModel = (documentText.includes('State {') || documentText.includes('State extends')) && !documentText.includes('Mdl');
 
         for (let clazz of this.clazzes) {
             this.clazz = clazz;
@@ -760,13 +762,13 @@ class DataClassGenerator {
                 if (!clazz.isAbstract) {
                     if (readSetting('copyWith.enabled') && this.isPartSelected('copyWith'))
                         this.insertCopyWith(clazz);
-                    if (readSetting('toMap.enabled') && this.isPartSelected('serialization'))
+                    if (readSetting('toMap.enabled') && this.isPartSelected('serialization') && !isStateModel)
                         this.insertToMap(clazz);
-                    if (readSetting('fromMap.enabled') && this.isPartSelected('serialization'))
+                    if (readSetting('fromMap.enabled') && this.isPartSelected('serialization') && !isStateModel)
                         this.insertFromMap(clazz);
-                    if (readSetting('toJson.enabled') && this.isPartSelected('serialization'))
+                    if (readSetting('toJson.enabled') && this.isPartSelected('serialization') && !isStateModel)
                         this.insertToJson(clazz);
-                    if (readSetting('fromJson.enabled') && this.isPartSelected('serialization'))
+                    if (readSetting('fromJson.enabled') && this.isPartSelected('serialization') && !isStateModel)
                         this.insertFromJson(clazz);
                 }
 
