@@ -1209,7 +1209,12 @@ class DataClassGenerator {
             } else {
                 if (p.isPrimitive)
                     {
-                    method +=  `ReturnValue.${p.type.toLowerCase()}(` + `${value})`;
+                    const type = p.type.toLowerCase()
+                        .replace('int', 'integer')
+                        .replace('num', 'number')
+                        .replace('double', 'doubleValue')
+                        .replace('bool', 'boolean');
+                    method +=  `ReturnValue.${type}(` + `${value})`;
                     }
                 else
                     method += customTypeMapping(p);
