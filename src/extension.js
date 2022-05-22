@@ -1209,8 +1209,10 @@ class DataClassGenerator {
                     method += `\t\tfromMap:  ${type}.fromMap,\n\t\t)`;
                 }
             } else {
-                if (p.isPrimitive) 
-                    method =  `ReturnValue.${p.type.toLowerCase()}(` + `${value})`;
+                if (p.isPrimitive)
+                    {
+                    method +=  `ReturnValue.${p.type.toLowerCase()}(` + `${value})`;
+                    }
                 else
                     method += customTypeMapping(p);
             }
